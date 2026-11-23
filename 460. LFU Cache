@@ -1,0 +1,77 @@
+import java.util.*;
+
+class LFUCache {
+
+    int capacity;
+    int minFreq;
+
+    HashMap<Integer, Integer> values;
+    HashMap<Integer, Integer> freq;
+
+    HashMap<Integer, LinkedHashSet<Integer>> list;
+
+    public LFUCache(int capacity) {
+        this.capacity = capacity;
+        minFreq = 0;
+
+        values = new HashMap<>();
+        freq = new HashMap<>();
+        list = new HashMap<>();
+    }
+
+    public int get(int key) {
+
+        if (!values.containsKey(key)) {
+            return -1;
+        }
+
+        int oldFreq = freq.get(key);
+
+        list.get(oldFreq).remove(key);
+
+        if (list.get(oldFreq).isEmpty()) {
+            list.remove(oldFreq);
+
+            if (minFreq == oldFreq) {
+                minFreq++;
+            }
+        }
+
+        freq.put(key, oldFreq + 1);
+
+        list.putIfAbsent(oldFreq + 1, new LinkedHashSet<>());
+        list.get(oldFreq + 1).add(key);
+
+        return values.get(key);
+    }
+
+    public void put(int key, int value) {
+
+        if (capacity == 0) {
+            return;
+        }
+
+        if (values.containsKey(key)) {
+            values.put(key, value);
+            get(key);
+            return;
+        }
+
+        if (values.size() == capacity) {
+
+            int removeKey = list.get(minFreq).iterator().next();
+
+            list.get(minFreq).remove(removeKey);
+
+            values.remove(removeKey);
+            freq.remove(removeKey);
+        }
+        values.put(key, value);
+        freq.put(key, 1);
+
+        list.putIfAbsent(1, new LinkedHashSet<>());
+        list.get(1).add(key);
+
+        minFreq = 1;
+    }
+}
